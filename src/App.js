@@ -17,7 +17,10 @@ function App() {
     const {data, error, loading} = useRequest(handleWebGraph);
 
     if (!loading) {
-        console.log(data)
+        data.nodes.forEach(item=>{
+            item.x*=1.2
+            item.y*=1.2
+        })
         return (
             <Graph data={data}/>
         )

@@ -9,24 +9,33 @@ const ShowPaths = (props) => {
     const {graph} = useContext(GraphinContext);
     const nodes = graph.getNodes();
     const edges = graph.getEdges();
-    const [focused, setFocused] = useState(null);
+    const [focused, setFocused] = useState(["第七教学楼", "学生宿舍梅园1号"]);
+
+    const {data, error, loading,run} = useRequest(() => handleWebPaths(focused[0], focused[1]), {
+        manual: true,
+    });
 
     useEffect(() => {
 
-        const handleClick = (evt) => {
-            const nodes = graph.findAllByState("node", "selected")
-            let array = nodes.map(node => {
-                return node.getModel().id
-            })
-            setFocused(array)
-            console.log(nodes[0].getModel().id)
-        };
+        const handleSelectChange = (target, selectedItems) => {
 
-        graph.on('node:click', handleClick);
-        return () => {
-            graph.off('node:click', handleClick);
-        };
+            if (target.select) {
+                let array = target.selectedItems.nodes.map(node => {
+                    return node.getModel().id
+                })
+                if (array.length === 2)
+                    setFocused(array)
+            }
+
+        }
+
+        graph.on("nodeselectchange", handleSelectChange);
+
     }, []);
+
+    useEffect(()=>{
+        run()
+    },[focused])
 
     function handleShowPath(path) {
         nodes.forEach(node => {
@@ -39,21 +48,21 @@ const ShowPaths = (props) => {
             const model = edge.getModel();
             if (!path.edges.includes(model.id)) {
                 graph.setItemState(edge, 'inactive', true);
-                graph.updateItem(model.id,{
-                    style:{
-                        label:{
-                            value:model.style.label.value,
-                            opacity:0
+                graph.updateItem(model.id, {
+                    style: {
+                        label: {
+                            value: model.style.label.value,
+                            opacity: 0
                         }
                     }
                 })
             } else {
                 graph.setItemState(edge, 'active', true);
-                graph.updateItem(model.id,{
-                    style:{
-                        label:{
-                            value:model.style.label.value,
-                            opacity:1
+                graph.updateItem(model.id, {
+                    style: {
+                        label: {
+                            value: model.style.label.value,
+                            opacity: 1
                         }
                     }
                 })
@@ -72,22 +81,22 @@ const ShowPaths = (props) => {
             const model = edge.getModel();
             if (!path.edges.includes(model.id)) {
                 graph.setItemState(edge, 'inactive', false);
-                graph.updateItem(model.id,{
-                    style:{
-                        label:{
-                            value:model.style.label.value,
-                            opacity:1
+                graph.updateItem(model.id, {
+                    style: {
+                        label: {
+                            value: model.style.label.value,
+                            opacity: 1
                         }
                     }
                 })
             } else {
                 graph.setItemState(edge, 'active', false);
-                graph.updateItem(model.id,{
-                    style:{
+                graph.updateItem(model.id, {
+                    style: {
 
-                        label:{
-                            value:model.style.label.value,
-                            opacity:1
+                        label: {
+                            value: model.style.label.value,
+                            opacity: 1
                         }
                     }
                 })
@@ -95,34 +104,32 @@ const ShowPaths = (props) => {
         });
     }
 
-    if (props.paths!=null){
+    if (data !== undefined) {
         return (
             <div style={{position: 'absolute', top: 5}}>
                 <ul className="status-ul">
-                    <h3>{focused}</h3>
+                    <h3>已选择:{focused[0] + " to " + focused[1]}</h3>
 
-                    {props.paths.map((path, index) => {
+                    {data.map((path, index) => {
                         return (
-                            // eslint-disable-next-line react/no-array-index-key
-                            <li key={index} onMouseEnter={() => handleShowPath(path)}
-                                onMouseLeave={() => handleClear(path)}
-                            >
-                                路径-{index + 1}
-                                <button onClick={}>显示</button><button>取消</button>
+                            <li key={index}>
+                                路径:
+                                <button onClick={() => handleShowPath(path)}>显示</button>
+                                <button onClick={() => handleClear(path)}>取消</button>
                             </li>
                         );
                     })}
                 </ul>
             </div>
         );
-    }else
+    } else
         return null;
 };
 
-const handleWebPaths = () => {
+const handleWebPaths = (start, destination) => {
     return new Promise((resolve) => {
         setTimeout(() => {
-            getWebPaths("图书馆","南1门口").then(
+            getWebPaths(start, destination).then(
                 result => resolve(result)
             )
         }, 1000);
@@ -130,10 +137,14 @@ const handleWebPaths = () => {
 }
 
 export default function Graph(props) {
-    const {data, error, loading} = useRequest(handleWebPaths);
-    console.log(data)
+
+
     return (
-        <Graphin data={props.data} layout={{type: 'gForce',nodeSize: 10,preventOverlap:true}}>
+        <Graphin data={props.data}
+            // layout={{type: 'gForce', nodeSize: 10, preventOverlap: true, nodeSpacing: 10,}}
+                 layout={{type: "preset"}}
+                 height={900}
+        >
             <Tooltip bindType="node" hasArrow={true}>
                 <Tooltip.Node>
                     {model => {
@@ -145,7 +156,7 @@ export default function Graph(props) {
                     }}
                 </Tooltip.Node>
             </Tooltip>
-            <ShowPaths paths={loading?null:data}/>
+            <ShowPaths/>
         </Graphin>
     )
 }
