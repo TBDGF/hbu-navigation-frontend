@@ -1,6 +1,8 @@
+const BASE_URL="http://hbu-navigation.allenji.cn/"
+
 export async function getWebGraph() {
     let data
-    await fetch("http://localhost:8080/api/get")
+    await fetch(BASE_URL+"api/get")
         .then(res => res.json())
         .then(
             res => {
@@ -12,7 +14,7 @@ export async function getWebGraph() {
 
 export async function getWebPaths(start,destination) {
     let data
-    await fetch("http://localhost:8080/api/traverse/dijkstra"+"?start="+start+"&destination="+destination)
+    await fetch(BASE_URL+"api/traverse/dijkstra"+"?start="+start+"&destination="+destination)
         .then(res => res.json())
         .then(
             res => {

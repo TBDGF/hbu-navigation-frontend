@@ -22,7 +22,9 @@ function App() {
             item.y*=1.2
         })
         return (
-            <Graph data={data}/>
+            <div>
+                <Graph data={data}/>
+            </div>
         )
     } else {
         return (
