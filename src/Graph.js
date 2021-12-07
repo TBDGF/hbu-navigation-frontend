@@ -9,10 +9,22 @@ const ShowPaths = () => {
     const nodes = graph.getNodes();
     const edges = graph.getEdges();
     const [focused, setFocused] = useState(["第七教学楼", "学生宿舍梅园1号"]);
+    const [pass,setPass]=useState([])
+    const [selecting,setSelecting]=useState(false)
 
-    const {data, error, loading, run} = useRequest(() => handleWebPaths(focused[0], focused[1]), {
+    const {data, error, loading, run} = useRequest(() => handleWebPaths(focused[0], focused[1], pass), {
         manual: true,
     });
+
+    const handleWebPaths = (start, destination, pass) => {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                getWebPaths(start, destination, pass).then(
+                    result => resolve(result)
+                )
+            }, 1000);
+        });
+    }
 
     useEffect(() => {
 
@@ -36,32 +48,25 @@ const ShowPaths = () => {
         run()
     }, [focused])
 
-    function handleShowPath(path) {
+    function handleShowPath(path,color) {
         nodes.forEach(node => {
             const model = node.getModel();
-            if (!path.nodes.includes(model.id)) {
-                graph.setItemState(node, 'inactive', true);
+            if (path.nodes.includes(model.id)) {
+                graph.setItemState(node, 'inactive', false);
             }
         });
         edges.forEach(edge => {
             const model = edge.getModel();
-            if (!path.edges.includes(model.id)) {
-                graph.setItemState(edge, 'inactive', true);
-                graph.updateItem(model.id, {
-                    style: {
-                        label: {
-                            value: model.style.label.value,
-                            opacity: 0
-                        }
-                    }
-                })
-            } else {
-                graph.setItemState(edge, 'active', true);
+            if (path.edges.includes(model.id)) {
+                graph.setItemState(edge, 'inactive', false);
                 graph.updateItem(model.id, {
                     style: {
                         label: {
                             value: model.style.label.value,
                             opacity: 1
+                        },
+                        keyshape:{
+                            stroke:color
                         }
                     }
                 })
@@ -69,37 +74,58 @@ const ShowPaths = () => {
         });
     }
 
-    function handleClear(path) {
+    const handleShowPaths = (paths) => {
+        console.log(paths)
         nodes.forEach(node => {
             const model = node.getModel();
-            if (!path.nodes.includes(model.id)) {
-                graph.setItemState(node, 'inactive', false);
-            }
+            graph.setItemState(node, 'inactive', true);
         });
         edges.forEach(edge => {
             const model = edge.getModel();
-            if (!path.edges.includes(model.id)) {
-                graph.setItemState(edge, 'inactive', false);
-                graph.updateItem(model.id, {
-                    style: {
-                        label: {
-                            value: model.style.label.value,
-                            opacity: 1
-                        }
+            graph.setItemState(edge, "inactive", true)
+            graph.updateItem(model.id, {
+                style: {
+                    label: {
+                        value: model.style.label.value,
+                        opacity: 0
+                    },
+                    keyshape:{
+                        stroke:"#DDDDDD"
                     }
-                })
-            } else {
-                graph.setItemState(edge, 'active', false);
-                graph.updateItem(model.id, {
-                    style: {
+                }
+            })
+        })
+        const colors=["red","orange","yellow","green","cyan","blue","purple"]
+        paths.map((path,index) => {
+            handleShowPath(path,colors[index])
+        })
+    }
 
-                        label: {
-                            value: model.style.label.value,
-                            opacity: 1
-                        }
+    const handleClearPaths = (paths) => {
+        paths.map(path => {
+            handleClear(path)
+        })
+    }
+
+    function handleClear(path) {
+        nodes.forEach(node => {
+            const model = node.getModel();
+            graph.setItemState(node, 'inactive', false);
+        });
+        edges.forEach(edge => {
+            const model = edge.getModel();
+            graph.setItemState(edge, 'inactive', false);
+            graph.updateItem(model.id, {
+                style: {
+                    label: {
+                        value: model.style.label.value,
+                        opacity: 1
+                    },
+                    keyshape:{
+                        stroke:"#DDDDDD"
                     }
-                })
-            }
+                }
+            })
         });
     }
 
@@ -109,31 +135,17 @@ const ShowPaths = () => {
                 <h3>请使用Ctrl或Shift来多选节点</h3>
                 <h3>已选择: <span style={{color: "red"}}>{focused[0] + " to " + focused[1]}</span></h3>
                 <h4>Designed&Made By AllenJi</h4>
-                {(!loading && error === undefined && data !== undefined)?
-                data.map((path, index) => {
-                    return (
-                        <div key={index}>
-                            路径:
-                            <button onClick={() => handleShowPath(path)}>显示</button>
-                            <button onClick={() => handleClear(path)}>隐藏</button>
-                        </div>
-                    );
-                }):null
+                {(!loading && error === undefined && data !== undefined) ?
+                    <div>
+                        路径:
+                        <button style={{marginLeft:5}} onClick={() => handleShowPaths(data)}>显示</button>
+                        <button style={{marginLeft:5}} onClick={() => handleClearPaths(data)}>隐藏</button>
+                    </div>
+                    : null
                 }
-
             </ul>
         </div>
     );
-};
-
-const handleWebPaths = (start, destination) => {
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            getWebPaths(start, destination).then(
-                result => resolve(result)
-            )
-        }, 1000);
-    });
 }
 
 export default function Graph(props) {
