@@ -31,7 +31,7 @@ export async function getWebPaths(start,destination,pass) {
             "destination": destination,
             "pass": pass
         }
-        await fetch(LOCAL_URL+"api/traverse/paths",{
+        await fetch(BASE_URL+"api/traverse/paths",{
             method:"POST",
             headers:{
                 "Content-Type":"application/json"
@@ -46,9 +46,5 @@ export async function getWebPaths(start,destination,pass) {
             )
         return data
     }
-
-}
-
-export async function getMorePaths(start,destination,pass){
 
 }

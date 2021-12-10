@@ -16,6 +16,8 @@ const ShowPaths = () => {
         manual: true,
     });
 
+
+
     const handleWebPaths = (start, destination, pass) => {
         return new Promise((resolve) => {
             setTimeout(() => {
@@ -27,26 +29,36 @@ const ShowPaths = () => {
     }
 
     useEffect(() => {
-
         const handleSelectChange = (target, selectedItems) => {
 
             if (target.select) {
                 let array = target.selectedItems.nodes.map(node => {
                     return node.getModel().id
                 })
-                if (array.length === 2)
-                    setFocused(array)
+                if (selecting){
+                    if (array!==pass){
+                        setPass(array)
+                    }
+
+                }else{
+                    if (array.length === 2&&array!==focused){
+                        setFocused(array)
+                    }
+
+                }
+
             }
 
         }
 
         graph.on("nodeselectchange", handleSelectChange);
 
-    }, []);
+    }, [selecting]);
 
     useEffect(() => {
+        console.log("run")
         run()
-    }, [focused])
+    }, [focused,pass])
 
     function handleShowPath(path,color) {
         nodes.forEach(node => {
@@ -75,10 +87,10 @@ const ShowPaths = () => {
     }
 
     const handleShowPaths = (paths) => {
-        console.log(paths)
         nodes.forEach(node => {
             const model = node.getModel();
             graph.setItemState(node, 'inactive', true);
+            graph.setItemState(node, 'selected', false);
         });
         edges.forEach(edge => {
             const model = edge.getModel();
@@ -129,18 +141,38 @@ const ShowPaths = () => {
         });
     }
 
+    const handleSelectingChange=()=>{
+        // const nodes = graph.findAllByState('node', 'selected');
+        // nodes.forEach(node=>{
+        //     const model = node.getModel();
+        //     graph.setItemState(node, 'selected', false);
+        // })
+        setSelecting(selecting=>!selecting)
+        graph.off("nodeselectchange");
+    }
+
+    const handleSelectingClear=()=>{
+        setPass([])
+    }
+
     return (
         <div style={{position: 'absolute', top: 5}}>
             <ul className="status-ul">
                 <h3>请使用Ctrl或Shift来多选节点</h3>
-                <h3>已选择: <span style={{color: "red"}}>{focused[0] + " to " + focused[1]}</span></h3>
+                <h3>已选择始末点: <span style={{color: "red"}}>{focused[0] + " to " + focused[1]}</span></h3>
+                <h3>{selecting?<span style={{color: "red"}}>正在</span>:"已"}选择中间点:<span style={{color: "red"}}>{pass.toString()}</span></h3>
                 <h4>Designed&Made By AllenJi</h4>
+                <h4>
+                    选择中间点：
+                    <button style={{marginLeft:5}} onClick={handleSelectingChange}>{selecting?"结束选择":"开始选择"}</button>
+                    <button style={{marginLeft:5}} onClick={handleSelectingClear}>清空</button>
+                </h4>
                 {(!loading && error === undefined && data !== undefined) ?
-                    <div>
+                    <h4>
                         路径:
                         <button style={{marginLeft:5}} onClick={() => handleShowPaths(data)}>显示</button>
                         <button style={{marginLeft:5}} onClick={() => handleClearPaths(data)}>隐藏</button>
-                    </div>
+                    </h4>
                     : null
                 }
             </ul>
